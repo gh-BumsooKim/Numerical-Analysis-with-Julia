@@ -1,6 +1,8 @@
 #import Pkg; Pkg.add("Plots")
 #import Pkg; Pkg.add("PlotlyJS")
+#import Pkg; Pkg.add("Distribution")
 using Plots
+using Random, Distributions
 
 TARGET_DAY = "2022"
 
@@ -29,6 +31,9 @@ println(hour_list)
 plotlyjs() # for daemon process (back)
 p1 = plot(hour_x, hour_list, xlabel="k", ylabel="P(x=k)",
 lw=2, marker = ([:circle :d], 3, 0.9, Plots.stroke(3, :gray)))
+#color="blue", lw=3, marker = ([:circle :d], 4, 0.9, Plots.stroke(2, :gray)))
+#plot!(p, ddd, fff_10, lw=3, marker = ([:circle :d], 4, 0.9, Plots.stroke(2, :gray)))
+#plot!(p, ddd, fff_20, lw=3, marker = ([:circle :d], 4, 0.9, Plots.stroke(2, :gray)))
 
 # 2. Pre-define Plot
 unknown = zeros(Int, 24, 1)
@@ -68,3 +73,45 @@ lw=2, marker = ([:circle], 3))
 for i in 2:12
     plot!(p3, hour_x, classes[:, i], lw=2, marker = ([:circle], 3))
 end
+
+# 5. Poisson Distribution
+
+X = []
+for i in 1:24
+    push!(X, Poisson(hour_list[i]))
+end
+
+poisson_prob_A = []
+poisson_prob_B = []
+poisson_prob_C = []
+poisson_prob_D = []
+poisson_prob_E = []
+
+fps = 120 # considering  Measurement Period
+
+for i in 1:length(hour_list)
+    A, B, C, D = 0, 0, 0, 0
+    for j in 0:4*fps
+        A = A + pdf(X[i], j)
+        B = B + pdf(X[i], j + 5*fps)
+        C = C + pdf(X[i], j + 10*fps)
+        D = D + pdf(X[i], j + 15*fps)
+    end
+
+    push!(poisson_prob_A, A)
+    push!(poisson_prob_B, B)
+    push!(poisson_prob_C, C)
+    push!(poisson_prob_D, D)
+    push!(poisson_prob_E, 1 - (A + B + C + D))
+end
+
+p4 = plot(hour_x, poisson_prob_A, xlabel="k", ylabel="P(x=k)",
+lw=2, marker = ([:circle :d], 3, 0.9, Plots.stroke(3, :gray)))
+plot!(p4, hour_x, poisson_prob_B, lw=2, marker = ([:circle :d], 3, 0.9,
+Plots.stroke(3, :gray)))
+plot!(p4, hour_x, poisson_prob_C, lw=2, marker = ([:circle :d], 3, 0.9,
+Plots.stroke(3, :gray)))
+plot!(p4, hour_x, poisson_prob_D, lw=2, marker = ([:circle :d], 3, 0.9,
+Plots.stroke(3, :gray)))
+plot!(p4, hour_x, poisson_prob_E, lw=2, marker = ([:circle :d], 3, 0.9,
+Plots.stroke(3, :gray)))
